@@ -32730,7 +32730,8 @@
 				_status.waitingToReload=true;
 			}
 			else{
-				window.location.reload();
+				alert("location 1")
+				//window.location.reload();
 			}
 		},
 		reload2:function(){
