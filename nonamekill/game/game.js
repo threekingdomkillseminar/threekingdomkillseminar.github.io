@@ -46,7 +46,7 @@
 		},
 		updateURL:'https://raw.githubusercontent.com/libccy/noname',
 		mirrorURL:'https://nakamurayuri.coding.net/p/noname/d/noname/git/raw',
-		hallURL:'wss://tkks-server.onrender.com:443',
+		hallURL:'wss://tkks-server.threekingdomkil.repl.co/',
 		assetURL:'',
 		changeLog:[],
 		updates:[],
@@ -32730,8 +32730,7 @@
 				_status.waitingToReload=true;
 			}
 			else{
-				alert("location 1")
-				//window.location.reload();
+				window.location.reload();
 			}
 		},
 		reload2:function(){
