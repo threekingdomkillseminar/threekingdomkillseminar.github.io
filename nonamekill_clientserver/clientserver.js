@@ -330,6 +330,9 @@ function createWSStoMiddleServer(url){
                     }
                     if(this.room) util.updaterooms();
                     else util.updateclients();
+                    // client should want to disconnect with server, so close and reconnect with middleServer
+                    wss.close();
+                    createWSStoMiddleServer(url);
                     return;
                 }
                 if(!clients[this.wsid]) return;
@@ -398,8 +401,6 @@ function createWSStoMiddleServer(url){
         })
         wss.closePlayer = () => {  // (Original .close()) When server want to disconnect with player, send to middleserver
             wss.send("cs_close");
-            // wss.close();
-            // createWSStoMiddleServer(url);
         }
         wss.addEventListener('close', (event)=>{  // middleServer disconnected
             console.log("bug: middleServer closed the connection to clientServer")
