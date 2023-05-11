@@ -83,4 +83,3 @@ function middleserver(port){
 }
 
 middleserver(8080);
-middleserver(8081);

@@ -411,5 +411,10 @@ function createWSStoMiddleServer(url){
     
 }
 
-createWSStoMiddleServer("ws://localhost:8080")
-createWSStoMiddleServer("ws://localhost:8081")
+function connectToMiddleServers(){
+    createWSStoMiddleServer("wss://tkks-mid1.threekingdomkil.repl.co/");
+    createWSStoMiddleServer("wss://tkks-mid2.threekingdomkil.repl.co/");
+    createWSStoMiddleServer("wss://tkks-mid3.threekingdomkil.repl.co/");
+    createWSStoMiddleServer("wss://tkks-mid4.threekingdomkil.repl.co/");
+    createWSStoMiddleServer("wss://tkks-mid5.threekingdomkil.repl.co/");
+}

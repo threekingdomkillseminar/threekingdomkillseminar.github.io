@@ -5,8 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>無名殺 - Client Server</title>
     <script src="clientserver.js"></script>
+    <script>
+      // prevent accidentally closing the browser (if the user has interacted with the page)
+      window.addEventListener('beforeunload', function (e) {
+        e.preventDefault();
+        e.returnValue = '';
+      });
+    </script>
   </head>
   <body>
     <h1>無名殺 - Client Server</h1>
+    <input type="button" value="Connect" onclick="connectToMiddleServers();this.disabled=true;" />
   </body>
 </html>
