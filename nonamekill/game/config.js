@@ -37,8 +37,8 @@ window.config={
 	hoveration:1000,
 	doubleclick_intro:true,
 	cheat:false,
-	volumn_background:8,
-	volumn_audio:8,
+	volumn_background:1,
+	volumn_audio:1,
 
 	connect_avatar:'caocao',
 	connect_nickname:'无名玩家',
