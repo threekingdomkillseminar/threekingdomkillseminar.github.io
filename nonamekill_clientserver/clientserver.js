@@ -1,6 +1,15 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
 // clientPlayer <=> middleserver <=> [clientServer]
 
+
+const middleServerList = [
+    "wss://tkks-mid1.threekingdomkil.repl.co/",
+    "wss://tkks-mid2.threekingdomkil.repl.co/",
+    "wss://tkks-mid3.threekingdomkil.repl.co/",
+    "wss://tkks-mid4.threekingdomkil.repl.co/",
+    "wss://tkks-mid5.threekingdomkil.repl.co/"
+];
+
 var bannedKeys=[];
 //var bannedIps=[];
 
@@ -302,6 +311,7 @@ var util={
 function createWSStoMiddleServer(url){
     const wss = new WebSocket(url);
     wss.addEventListener('open',function(event){
+        changeStatus(url, "waiting for player");
         var clientplayerConnected = false;
         wss.send("I_am_clientserver");
         wss.addEventListener('message', (event)=>{
@@ -332,6 +342,7 @@ function createWSStoMiddleServer(url){
                     else util.updateclients();
                     // client should want to disconnect with server, so close and reconnect with middleServer
                     wss.close();
+                    changeStatus(url, "connecting");
                     createWSStoMiddleServer(url);
                     return;
                 }
@@ -363,6 +374,7 @@ function createWSStoMiddleServer(url){
                 }
             } else {  // middleserver connected but player not connected
                 if (message=="ms_playerConnected"){  // player just connected
+                    changeStatus(url, "player connected");
                     clientplayerConnected = true;
                     wss.sendl=util.sendl;
                     // if(bannedIps.indexOf(ws._socket.remoteAddress)!=-1){
@@ -400,10 +412,11 @@ function createWSStoMiddleServer(url){
             }
         })
         wss.closePlayer = () => {  // (Original .close()) When server want to disconnect with player, send to middleserver
+            changeStatus(url, "waiting for player");
             wss.send("cs_close");
         }
         wss.addEventListener('close', (event)=>{  // middleServer disconnected
-            console.log("bug: middleServer closed the connection to clientServer")
+            changeStatus(url, "closed");
         });
 
     });
@@ -412,9 +425,36 @@ function createWSStoMiddleServer(url){
 }
 
 function connectToMiddleServers(){
-    createWSStoMiddleServer("wss://tkks-mid1.threekingdomkil.repl.co/");
-    createWSStoMiddleServer("wss://tkks-mid2.threekingdomkil.repl.co/");
-    createWSStoMiddleServer("wss://tkks-mid3.threekingdomkil.repl.co/");
-    createWSStoMiddleServer("wss://tkks-mid4.threekingdomkil.repl.co/");
-    createWSStoMiddleServer("wss://tkks-mid5.threekingdomkil.repl.co/");
+    middleServerList.map(middleServerURL=>{
+        changeStatus(middleServerURL, "connecting");
+        createWSStoMiddleServer(middleServerURL);
+    });
+}
+
+const statusColor = {
+    "connecting": "yellow",
+    "waiting for player": "lightgreen",
+    "player connected": "green",
+    "closed": "red"
+}
+function changeStatus(url, status){
+    document.getElementById(url).style.backgroundColor = statusColor[status];
+    document.getElementById(url).innerText = status;
+}
+
+function initialize(){
+    let tbody = document.createElement("tbody");
+    for (let middleServerURL of middleServerList){
+        let tr = document.createElement("tr");
+        let td = document.createElement("td");
+        td.innerText = middleServerURL;
+        tr.appendChild(td);
+        let td2 = document.createElement("td");
+        td2.innerText = "-";
+        td2.setAttribute("id", middleServerURL);
+        td2.setAttribute("style", "background-color: lightgray;");
+        tr.appendChild(td2);
+        tbody.appendChild(tr);
+    }
+    document.getElementById("statusTable").lastElementChild.replaceWith(tbody);
 }

@@ -4,7 +4,15 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>無名殺 - Client Server</title>
-    <script src="clientserver.js"></script>
+    <style>
+      table{
+        margin-top: 20px;
+      }
+      tbody tr td{
+        min-width: 300px;
+      }
+    </style>
+    <script src="clientserver.js" defer></script>
     <script>
       // prevent accidentally closing the browser (if the user has interacted with the page)
       window.addEventListener('beforeunload', function (e) {
@@ -13,8 +21,11 @@
       });
     </script>
   </head>
-  <body>
+  <body onload="initialize();">
     <h1>無名殺 - Client Server</h1>
-    <input type="button" value="Connect" onclick="connectToMiddleServers();this.disabled=true;" />
+    <input type="button" value="Connect" onclick="connectToMiddleServers();this.disabled=true;" style="zoom: 1.5"/>
+    <table id="statusTable" border="1">
+      <tbody></tbody>
+    </table>
   </body>
 </html>
