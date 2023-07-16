@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    html {
+      height: 200px;
+      width: 324px;
+      background: #ffdab9;
+    }
+    button{
+      background-color: green;
+      border: none;
+      color: white;
+      height: 50px;
+      width: 81px;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      display:inline-block;
+    }
+    button.active{
+      opacity: 1;
+    }
+    button.inactive{
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <h2>Egg Hack</h2>
+  <div>
+    <button id="egghackOnBtn" class="inactive">ON</button>
+    <button id="egghackOffBtn" class="active">OFF</button>
+  </div>
+  <div id="test"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
