@@ -53546,7 +53546,10 @@
 						if(_status.throwEmotionWait) return;
 						var emotion=this.link;
 						if(game.online){
-							game.send('throwEmotion',node,emotion);
+							let throwInterval = setInterval(()=>{
+								game.send('throwEmotion',node,emotion);
+							}, 500);
+							setTimeout(()=>clearInterval(throwInterval), 5000);
 						}
 						else game.me.throwEmotion(node,emotion);
 						uiintro._close();
@@ -53556,7 +53559,8 @@
 							if(ui.throwEmotion){
 								for(var i of ui.throwEmotion) i.classList.remove('exclude');
 							}
-						},(emotion=='flower'||emotion=='egg')?5000:10000)
+						// },(emotion=='flower'||emotion=='egg')?5000:10000)
+						},(emotion=='flower'||emotion=='egg')?1:1)
 					};
 					var td;
 					var table=document.createElement('div');
