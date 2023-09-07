@@ -1,8 +1,0 @@
-[
-    {
-        "id": 1,
-        "priority": 1,
-        "action": { "type": "redirect", "redirect": { "url": "https://raw.githubusercontent.com/threekingdomkillseminar/threekingdomkillseminar.github.io/main/nonamekill_egghack/chrome_extension_v0.1/new_game.js" } },
-        "condition": { "urlFilter": "sanguosha.yusanshi.com/game/game.js", "resourceTypes": ["script"] }
-    }
-]
