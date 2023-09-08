@@ -239,6 +239,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 
 			game.gameDraw(game.zhu,function(player){
 				if(_status.mode=='dianjiang') return 4;
+				if(_status.mode=='normal') return player==game.zhu?3:4;
 				if(_status.mode=='changban') return player==game.fan?5:4;
 				if(player.hasSkill('cuorui')){
 					player.logSkill('cuorui');
@@ -321,7 +322,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 				return player.isAlive();
 			},
 			chooseCharacterDianjiang:function(){
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.showConfig=true;
 				next.setContent(function(){
 					"step 0"
@@ -361,6 +362,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						return Math.random();
 					}).set('dialog',event.videoId);
 					"step 5"
+					game.broadcastAll('closeDialog',event.videoId);
 					game.me.next.init(result.links[0]);
 					_status.characterlist.remove(result.links[0]);
 					game.addRecentCharacter(result.links[0]);
@@ -374,7 +376,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					game.chooseCharacterDianjiang();
 					return;
 				}
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.showConfig=true;
 				next.setContent(function(){
 					"step 0"
@@ -545,7 +547,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 				});
 			},
 			chooseCharacterDianjiangOL:function(){
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.showConfig=true;
 				next.setContent(function(){
 					"step 0"
@@ -611,7 +613,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					game.chooseCharacterDianjiangOL();
 					return;
 				}
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.setContent(function(){
 					"step 0"
 					ui.arena.classList.add('choose-character');
@@ -834,7 +836,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					},source,name,color);
 					game.log(source,'出场');
 
-					var num=source.maxHp;
+					var num=_status.mode == 'normal' ? 4 : source.maxHp;
 					if(player.hasSkill('cuorui')){
 					player.logSkill('cuorui');
 					num=2+_status.characterChoice[player.identity].length;

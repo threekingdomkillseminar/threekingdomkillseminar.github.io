@@ -34,7 +34,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			caozhi:['male','wei',3,['luoying','jiushi']],
 			caochong:['male','wei',3,['chengxiang','renxin']],
 			xunyou:['male','wei',3,['qice','zhiyu'],['clan:颍川荀氏']],
-			xin_xushu:['male','shu',3,['xinwuyan','xinjujian']],
+			xin_xushu:['male','shu',3,['xinwuyan','xinjujian'],['border:wei']],
 			xin_masu:['male','shu',3,['olsanyao','rezhiman']],
 			zhuran:['male','wu',4,['danshou']],
 			xusheng:['male','wu',4,['xinpojun']],
@@ -46,7 +46,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			bulianshi:['female','wu',3,['old_anxu','zhuiyi']],
 			handang:['male','wu',4,['gongji','jiefan']],
 			fuhuanghou:['female','qun',3,['qiuyuan','zhuikong']],
-			zhonghui:['male','wei',4,['quanji','zili']],
+			zhonghui:['male','wei',4,['quanji','zili'],['clan:颍川钟氏']],
 			jianyong:['male','shu',3,['qiaoshui','jyzongshi']],
 			old_madai:['male','shu',4,['mashu','qianxi']],
 			liufeng:['male','shu',4,['xiansi']],
@@ -72,7 +72,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 
 			caorui:['male','wei',3,['huituo','mingjian','xingshuai'],['zhu']],
 			caoxiu:['male','wei',4,['qianju','qingxi']],
-			zhongyao:['male','wei',3,['huomo','zuoding']],
+			zhongyao:['male','wei',3,['huomo','zuoding'],['clan:颍川钟氏']],
 			liuchen:['male','shu',4,['zhanjue','qinwang'],['zhu']],
 			zhangyi:['male','shu',4,['wurong','shizhi']],
 			sunxiu:['male','wu',3,['yanzhu','xingxue','xinzhaofu'],['zhu']],
@@ -94,7 +94,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			sunziliufang:['male','wei',3,['guizao','jiyu']],
 
 			xinxianying:['female','wei',3,['zhongjian','caishi']],
-			wuxian:['female','shu',3,['fumian','daiyan']],
+			wuxian:['female','shu',3,['fumian','daiyan'],['clan:陈留吴氏']],
 			xushi:['female','wu',3,['wengua','fuzhu']],
 			caojie:['female','qun',3,['shouxi','huimin']],
 
@@ -386,8 +386,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				audio:2,
 				trigger:{global:'phaseEnd'},
 				filter:function(event,player){
-					var zhu=game.filterPlayer(i=>i.getSeatNum()==1)[0];
-					return player.hasSkill('shiming_round')&&(game.getGlobalHistory('changeHp',evt=>{
+					var zhu=game.findPlayer(i=>i.getSeatNum()==1);
+					return zhu&&player.hasSkill('shiming_round')&&(game.getGlobalHistory('changeHp',evt=>{
 						return evt.player==zhu&&evt._dyinged;
 					}).length>0||zhu.getHistory('damage').length==0)||!game.hasPlayer2(current=>current.getHistory('damage').length>0);
 				},
@@ -395,7 +395,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				content:function(){
 					'step 0'
 					if(player.hasSkill('shiming_round')){
-						var zhu=game.filterPlayer(i=>i.getSeatNum()==1)[0];
+						var zhu=game.findPlayer(i=>i.getSeatNum()==1);
 						if(game.getGlobalHistory('changeHp',evt=>{
 							return evt.player==zhu&&evt._dyinged;
 						}).length>0||zhu.getHistory('damage').length==0){
@@ -435,7 +435,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				},
 				content:function(){
 					var cards=[];
-					for(var card of ui.cardPile.childNodes){
+					for(var i=0;i<ui.cardPile.childNodes.length;i++){
+						var card=ui.cardPile.childNodes[i];
 						if(card.name!='sha') cards.push(card);
 						if(cards.length>=5) break;
 					}
@@ -568,20 +569,16 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				trigger:{global:['eventNeutralized','shaMiss']},
 				filter:function(event,player){
 					if(player.hasSkill('diezhang_used')) return false;
-					if(event.type!='card'&&event.name!='_wuxie') return false;
+					if(event.type!='card') return false;
 					var evt=event._neutralize_event;
 					var user,responder;
-					if(event.name=='_wuxie'){
-						var list=game.getGlobalHistory('useCard',evtx=>evtx.getParent()==event).slice(-2);
-						if(list.length<=1) return false;
-						user=list[0].player;responder=list[1].player;
-					}
-					else if(evt&&evt.name=='_wuxie'){
-						var evtx=game.getGlobalHistory('useCard',evtx=>evtx.getParent()==evt)[0];
-						user=event.player;responder=evtx.player;
+					if(event.name=='sha'){
+						user=event.player;responder=event.target;
 					}
 					else{
-						user=event.player;responder=event.target;
+						if(evt.type!='card') return false;
+						user=event.player;
+						responder=evt.player;
 					}
 					if(!player.storage.diezhang){
 						if(user!=player||responder==player) return false;
@@ -597,16 +594,12 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					'step 0'
 					var evt=trigger._neutralize_event;
 					var user,responder;
-					if(trigger.name=='_wuxie'){
-						var list=game.getGlobalHistory('useCard',evtx=>evtx.getParent()==trigger).slice(-2);
-						user=list[0].player;responder=list[1].player;
-					}
-					else if(evt&&evt.name=='_wuxie'){
-						var evtx=game.getGlobalHistory('useCard',evtx=>evtx.getParent()==evt)[0];
-						user=trigger.player;responder=evtx.player;
+					if(trigger.name=='sha'){
+						user=trigger.player;responder=trigger.target;
 					}
 					else{
-						user=trigger.player;responder=trigger.target;
+						user=trigger.player;
+						responder=evt.player;
 					}
 					var num=player.storage.duanwan?2:1;
 					event.num=num;
@@ -976,7 +969,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						forced:true,
 						charlotte:true,
 						filter:function(event,player){
-							return player.getStorage('sangu_effect').length>0;
+							return event.cards.length>0&&player.getStorage('sangu_effect').length>0;
 						},
 						content:function(){
 							if(!trigger.card.storage) trigger.card.storage={};
@@ -1283,17 +1276,16 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			},
 			lkzhongzhuang:{
 				audio:2,
-				trigger:{source:'damageBegin1'},
+				trigger:{source:['damageBegin1','damageBegin4']},
 				forced:true,
-				filter:function(event,player){
+				filter:function(event,player,name){
 					if(!event.card||event.card.name!='sha'||event.getParent().type!='card') return false;
 					var range=player.getAttackRange();
-					if(range>3) return true;
+					if(name=='damageBegin1') return range>3;
 					return range<3&&event.num>1;
 				},
 				content:function(){
-					var range=player.getAttackRange();
-					if(range>3) trigger.num++;
+					if(event.triggername=='damageBegin1') trigger.num++;
 					else trigger.num=1;
 				},
 				global:'lkzhongzhuang_ai',
@@ -1387,6 +1379,23 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				content:function(){
 					target.addSkill('xinzhaofu_effect');
 					target.markAuto('xinzhaofu_effect',[player]);
+				},
+				ai:{
+					order:9,
+					result:{
+						target:function(player,target){
+							var targets=game.filterPlayer(function(current){
+								return current.group=='wu'&&get.attitude(player,current)>0;
+							});
+							if(targets.length){
+								for(var targetx of targets){
+									if(!targetx.inRange(target)) return -1;
+								}
+								return -0.5;
+							}
+							return 0;
+						}
+					}
 				},
 				subSkill:{
 					effect:{
@@ -2264,12 +2273,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			xinzongzuo:{
-				trigger:{global:'phaseBefore'},
+				trigger:{
+					global:'phaseBefore',
+					player:'enterGame',
+				},
 				forced:true,
-				priority:10,
 				audio:'zongzuo',
 				filter:function(event,player){
-					return game.phaseNumber==0;
+					return (event.name!='phase'||game.phaseNumber==0);
 				},
 				content:function(){
 					'step 0'
@@ -2396,7 +2407,9 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				trigger:{player:['useCardAfter','respondAfter']},
 				forced:true,
 				popup:false,
+				charlotte:true,
 				filter:function(event,player){
+					if(!game.hasPlayer(current=>current!=player)) return false;
 					return event.skill=='xintaoluan_backup'||event.skill=='xintaoluan5'||event.skill=='xintaoluan4';
 				},
 				content:function(){
@@ -2440,7 +2453,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					}
 				}
 			},
-			xintaoluan3:{},
+			xintaoluan3:{charlotte:true},
 			xintaoluan4:{
 				audio:'taoluan',
 				prompt:'将一张牌当做闪使用',
@@ -2537,6 +2550,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xintaoluan6:{
 				trigger:{global:'phaseAfter'},
 				silent:true,
+				charlotte:true,
 				content:function(){
 					player.storage.xintaoluan=[];
 					player.storage.xintaoluan2=0;
@@ -4072,13 +4086,13 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					if(!player.storage.shouxi) player.storage.shouxi=[];
 				},
 				filter:function(event,player){
-					return event.card.name=='sha'&&event.player.isAlive();
+					return event.card.name=='sha'&&event.player.isIn();
 				},
 				content:function(){
 					'step 0'
 					var list=lib.inpile.filter(function(i){
 						if(player.storage.shouxi.contains(i)) return false;
-						var type=get.type(i);
+						var type=get.type2(i);
 						if(type=='basic'||type=='trick') return true;
 						return false;
 					});
@@ -4095,6 +4109,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						event.vcard=result.links;
 						event.cardname=name;
 						player.storage.shouxi.add(name);
+						player.popup(name);
+						game.log(player,'声明了','#y'+get.translation(name));
 					}
 					else{
 						event.finish();
@@ -4314,7 +4330,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						player.useCard(card,trigger.player,false);
 					}
 					'step 2'
-					if(event.total>0&&!event.washed&&ui.cardPile.childElementCount<=player.hp*10&&trigger.player.isAlive()) event.goto(1);
+					if(event.total>0&&!event.washed&&ui.cardPile.childElementCount<=player.hp*10&&trigger.player.isIn()) event.goto(1);
 					'step 3'
 					lib.onwash.remove(lib.skill.fuzhu.onWash);
 					var cards=get.cards(ui.cardPile.childElementCount+1);
@@ -4340,7 +4356,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						return current.hasSkill('wengua');
 					});
 				},
-				direct:true,
+				log:false,
 				delay:false,
 				filterCard:true,
 				discard:false,
@@ -4595,10 +4611,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						popup:false,
 						onremove:true,
 						filter:function(event,player){
-							return typeof player.storage.fumian_draw=='number';
-						},
-						filter:function(event,player){
-							return !event.numFixed;
+							return !event.numFixed&&typeof player.storage.fumian_draw=='number';
 						},
 						content:function(){
 							trigger.num+=player.storage.fumian_draw;
@@ -4948,7 +4961,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						audio:false,
 						content:function(){
 							"step 0"
-							if(player.storage.xinsidi4.isAlive()&&!player.getHistory('useCard',function(evt){
+							if(player.storage.xinsidi4.isIn()&&!player.getHistory('useCard',function(evt){
 								return evt.card.name=='sha';
 							}).length&&player.storage.xinsidi4.canUse({name:'sha',isCard:true},player,false)){
 								player.storage.xinsidi4.logSkill('xinsidi',player);
@@ -5070,7 +5083,9 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				trigger:{player:['useCardAfter','respondAfter']},
 				forced:true,
 				popup:false,
+				charlotte:true,
 				filter:function(event,player){
+					if(!game.hasPlayer(current=>current!=player)) return false;
 					return event.skill=='taoluan_backup'||event.skill=='taoluan5'||event.skill=='taoluan4';
 				},
 				content:function(){
@@ -5113,7 +5128,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					}
 				}
 			},
-			taoluan3:{},
+			taoluan3:{charlotte:true},
 			taoluan4:{
 				prompt:'将一张牌当做闪使用',
 				enable:'chooseToUse',
@@ -5757,12 +5772,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			zongzuo:{
-				trigger:{global:'phaseBefore'},
+				trigger:{
+					global:'phaseBefore',
+					player:'enterGame',
+				},
 				forced:true,
-				priority:10,
 				audio:2,
 				filter:function(event,player){
-					return game.phaseNumber==0;
+					return (event.name!='phase'||game.phaseNumber==0);
 				},
 				content:function(){
 					'step 0'
@@ -5898,7 +5915,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 							if(storage.length){
 								for(var i=0;i<storage[0].length;i++){
 									var target=storage[0][i],num=storage[1][i];
-									if(target&&target.isAlive()){
+									if(target&&target.isIn()){
 										player.line(target);
 										target.draw(num);
 									}
@@ -6214,7 +6231,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					'step 0'
 					var num=Math.min(game.countPlayer(function(current){
 						return player.inRange(current);
-					}),player.getEquip(1)?4:2);
+					}),player.getEquips(1).length?4:2);
 					if(trigger.target.countCards('h')<num){
 						event.directfalse=true;
 					}
@@ -6239,8 +6256,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					}
 					'step 1'
 					if(!event.directfalse&&result.bool){
-						var e1=player.getEquip(1);
-						if(e1){
+						var e1=player.getEquips(1);
+						if(e1.length){
 							player.discard(e1,'notBySelf');
 						}
 						event.finish();
@@ -6301,14 +6318,18 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					return get.attitude(player,event.player)<0;
 				},
 				filter:function(event,player){
-					return event.getParent().name=='sha'&&player.getEquip(1);
+					return event.getParent().name=='sha'&&player.getEquips(1).length>0;
 				},
 				content:function(){
 					'step 0'
-					var num=1;
-					var info=get.info(player.getEquip(1));
-					if(info&&info.distance&&info.distance.attackFrom){
-						num-=info.distance.attackFrom;
+					var num=0,cards=player.getEquips(1);
+					for(var card of cards){
+						var numz=1;
+						var info=get.info(card,false);
+						if(info&&info.distance&&info.distance.attackFrom){
+							numz-=info.distance.attackFrom;
+						}
+						num+=numz;
 					}
 					if(trigger.player.countCards('h')<num){
 						event.directfalse=true;
@@ -6334,8 +6355,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					}
 					'step 1'
 					if(!event.directfalse&&result.bool){
-						var e1=player.getEquip(1);
-						if(e1){
+						var e1=player.getEquips(1);
+						if(e1.length){
 							player.discard(e1,'notBySelf');
 						}
 					}
@@ -6523,7 +6544,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				},
 				trigger:{player:'useCard2'},
 				filter:function(event,player){
-					return player.storage.xinxianzhen&&player.storage.xinxianzhen.isAlive()&&
+					return player.storage.xinxianzhen&&player.storage.xinxianzhen.isIn()&&
 					(event.card.name=='sha'||get.type(event.card)=='trick')&&
 					event.targets&&event.targets.length==1&&!event.targets.contains(player.storage.xinxianzhen);
 				},
@@ -6655,7 +6676,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					next.forceDie=true;
 					trigger.after.push(next);
 					next.setContent(function(){
-						if(player.isAlive()&&player.getHistory('sourceDamage',function(evt){
+						if(player.isIn()&&player.getHistory('sourceDamage',function(evt){
 							return evt.getParent(2)==event.parent;
 						}).length>0) player.loseHp();
 						delete card.nature;
@@ -7545,7 +7566,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						event.finish();
 					}
 					'step 5'
-					if(player.isAlive()&&event.targets.length){
+					if(player.isIn()&&event.targets.length){
 						player.gainPlayerCard(event.targets.shift(),'he',true);
 					}
 					else event.finish();
@@ -7740,7 +7761,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					}
 					else event.finish();
 					'step 4'
-					if(target.isAlive()&&target.countCards('h')&&target.countCards('h')>target.hp) target.chooseCard('he',true,'将一张牌置于牌堆顶');
+					if(target.isIn()&&target.countCards('h')&&target.countCards('h')>target.hp) target.chooseCard('he',true,'将一张牌置于牌堆顶');
 					else event.goto(3);
 					'step 5'
 					if(result&&result.cards){
@@ -7779,7 +7800,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			zhaofu:{
 				unique:true,
 				global:'zhaofu2',
-				zhuSkill:true
+				zhuSkill:true,
+				locked:true,
 			},
 			zhaofu2:{
 				mod:{
@@ -7909,6 +7931,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					respondSha:true,
 				},
 				audio:2,
+				audioname:['xin_zhangyi'],
 				trigger:{player:['useCard1','respond']},
 				firstDo:true,
 				forced:true,
@@ -8782,6 +8805,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			mingjian:{
+				audio:2,
+				audioname:['re_caorui'],
 				enable:'phaseUse',
 				usable:1,
 				filterTarget:function(card,player,target){
@@ -8894,6 +8919,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			},
 			huituo:{
 				audio:2,
+				audioname:['re_caorui'],
 				trigger:{player:'damageEnd'},
 				direct:true,
 				content:function(){
@@ -8948,7 +8974,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				content:function(){
 					'step 0'
 					var prompt='弃置一张牌'
-					if(trigger.source.getEquip(1)) prompt+=('，然后获得'+get.translation(trigger.source)+'装备区中的'+get.translation(trigger.source.getEquip(1)));
+					if(trigger.source.getEquips(1).length) prompt+=('，然后获得'+get.translation(trigger.source)+'装备区中的'+get.translation(trigger.source.getEquips(1)));
 					var next=player.chooseToDiscard('he',get.prompt('duodao',trigger.source),prompt);
 					next.logSkill=['duodao',trigger.source];
 					next.set('ai',function(card){
@@ -8959,8 +8985,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						return 0;
 					});
 					'step 1'
-					if(result.bool&&trigger.source.getEquip(1)){
-						player.gain(trigger.source.getEquip(1),trigger.source,'give','bySelf');
+					if(result.bool&&trigger.source.getEquips(1).length){
+						player.gain(trigger.source.getEquips(1),trigger.source,'give','bySelf');
 					}
 				},
 				ai:{
@@ -9040,27 +9066,27 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			reduodao:{
 				trigger:{target:'useCardToTargeted'},
 				filter:function(event,player){
-					return event.card.name=='sha'&&(get.color(event.card)=='red'?event.player.getEquip(1):player.countCards('he')>0);
+					return event.card.name=='sha'&&(get.color(event.card)=='red'?event.player.getEquips(1).length>0:player.countCards('he')>0);
 				},
 				direct:true,
 				audio:2,
 				content:function(){
 					'step 0'
 					var prompt='弃置一张牌'
-					if(trigger.player.getEquip(1)) prompt+=('，然后获得'+get.translation(trigger.player)+'装备区中的'+get.translation(trigger.player.getEquip(1)));
+					if(trigger.player.getEquips(1).length) prompt+=('，然后获得'+get.translation(trigger.player)+'装备区中的'+get.translation(trigger.player.getEquips(1)));
 					var next=player.chooseToDiscard('he',get.prompt('reduodao',trigger.player),prompt);
 					next.logSkill=['reduodao',trigger.player];
 					next.set('ai',function(card){
-						if(!_status.event.getTrigger().player.getEquip(1)) return 0;
-						if(get.attitude(_status.event.player,_status.event.getTrigger().player)*get.value(_status.event.getTrigger().player.getEquip(1))<=0){
+						if(!_status.event.getTrigger().player.getEquips(1).length) return 0;
+						if(get.attitude(_status.event.player,_status.event.getTrigger().player)*get.value(_status.event.getTrigger().player.getEquips(1))<=0){
 							return 6-get.value(card);
 						}
 						return 0;
 					});
 					'step 1'
-					if(result.bool&&trigger.player.getEquip(1)){
+					if(result.bool&&trigger.player.getEquips(1).length){
 						if(!result.cards||!result.cards.length) player.logSkill('reduodao',trigger.player);
-						player.gain(trigger.player.getEquip(1),trigger.player,'give','bySelf');
+						player.gain(trigger.player.getEquips(1),trigger.player,'give','bySelf');
 					}
 				},
 			},
@@ -9138,7 +9164,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				audio:2,
 				trigger:{global:'phaseJieshuBegin'},
 				filter:function(event,player){
-					return event.player!=player&&event.player.countCards('h')==player.countCards('h')&&event.player.isAlive();
+					return event.player!=player&&event.player.countCards('h')==player.countCards('h')&&event.player.isIn();
 				},
 				check:function(event,player){
 					return get.attitude(player,event.player)>=0;
@@ -9152,27 +9178,22 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				audio:2,
 				enable:'phaseUse',
 				filter:function(event,player){
-					return player.countCards('h','sha')>0;
+					return player.hasCard(card=>lib.skill.yanyu.filterCard(card,player),'h');
 				},
-				filterCard:{name:'sha'},
-				prepare:function(cards,player){
-					player.$throw(cards,1000);
-					game.log(player,'将',cards,'置入了弃牌堆');
-				},
+				filterCard:(card,player)=>get.name(card)=='sha'&&player.canRecast(card),
 				discard:false,
-				loseTo:'discardPile',
-				visible:true,
-				delay:0.5,
+				lose:false,
+				delay:false,
 				content:function(){
-					player.draw();
+					player.recast(cards);
 				},
 				ai:{
 					basic:{
 						order:1
 					},
 					result:{
-						player:1,
-					},
+						player:1
+					}
 				},
 				group:'yanyu2'
 			},
@@ -9200,7 +9221,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			youdi:{
-				audio:true,
+				audio:2,
 				trigger:{player:'phaseJieshuBegin'},
 				direct:true,
 				filter:function(event,player){
@@ -9519,7 +9540,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						event.current=event.players.shift();
 						event.current.animate('target');
 						player.line(event.current,'green');
-						if(event.current.countCards('he')&&target.isAlive()){
+						if(event.current.countCards('he')&&target.isIn()){
 							event.current.chooseToDiscard({subtype:'equip1'},'he','弃置一张武器牌或让'+
 							get.translation(target)+'摸一张牌').set('ai',function(card){
 								if(get.attitude(_status.event.player,_status.event.target)<0) return 7-get.value(card);
@@ -10271,6 +10292,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			},
 			qiangzhi:{
 				audio:2,
+				audioname:['re_zhangsong'],
 				trigger:{player:'phaseUseBegin'},
 				direct:true,
 				filter:function(event,player){
@@ -10289,13 +10311,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					'step 1'
 					if(result.bool){
 						var target=result.targets[0];
+						event.target=target;
 						player.logSkill('qiangzhi',target);
 						player.choosePlayerCard(target,'h',true);
 					}
 					else event.finish();
 					'step 2'
 					var card=result.cards[0];
-					player.showCards(card);
+					target.showCards(card,get.translation(target)+'因【强识】展示');
 					player.storage.qiangzhi_draw=get.type(card,'trick');
 					game.addVideo('storage',player,['qiangzhi_draw',player.storage.qiangzhi_draw]);
 					player.addTempSkill('qiangzhi_draw','phaseUseEnd');
@@ -10601,7 +10624,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						player.addToExpansion(result.cards,player,'giveAuto').gaintag.add('quanji');
 					}
 					"step 4"
-					if(event.count>0){
+					if(event.count>0&&player.hasSkill('quanji')){
 						player.chooseBool(get.prompt2('quanji')).set('frequentSkill','quanji');
 					}
 					else event.finish();
@@ -10800,7 +10823,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				audio:2,
 				trigger:{global:'phaseEnd'},
 				filter:function(event,player){
-					if(event.player==player||!event.player.isAlive()) return false;
+					if(event.player==player||!event.player.isIn()) return false;
 					var history=event.player.getHistory('useCard');
 					for(var i=0;i<history.length;i++){
 						if(!history[i].targets) continue;
@@ -10815,7 +10838,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					"step 0"
 					var next;
 					if(trigger.player.hasCard(function(card){
-						return player.isEmpty(get.subtype(card));
+						return player.canEquip(card);
 					},'e')){
 						next=player.chooseControl('移动装备','draw_card','cancel2',function(event,player){
 							var source=_status.event.sourcex;
@@ -10845,7 +10868,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					if(result.control=='移动装备'){
 						player.logSkill('qieting',trigger.player);
 						player.choosePlayerCard(trigger.player,'e','将一张装备牌移至你的装备区',true).set('filterButton',function(button){
-							return _status.event.player.isEmpty(get.subtype(button.link));
+							return _status.event.player.canEquip(button.link);
 						}).set('ai',function(button){
 							return get.effect(player,button.link,player,player);
 						});
@@ -10917,10 +10940,16 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			oldqiuyuan:{
 				audio:'qiuyuan',
 				inherit:'qiuyuan',
+				filter:function(event,player){
+					return event.card.name=='sha'&&game.hasPlayer(function(current){
+						return current!=player&&!event.targets.contains(current)&&current.countCards('h')>0&&lib.filter.targetEnabled(event.card,event.player,current);
+					});
+				},
 				content:function(){
 					"step 0"
 					player.chooseTarget(get.prompt2('oldqiuyuan'),function(card,player,target){
-						return target!=player&&!_status.event.targets.contains(target)&&_status.event.playerx.canUse('sha',target,false)&&target.countCards('h');
+						var evt=_status.event.getTrigger();
+						return target!=player&&!evt.targets.contains(target)&&lib.filter.targetEnabled(evt.card,evt.player,target)&&target.countCards('h')>0;
 					}).set('ai',function(target){
 						var trigger=_status.event.getTrigger();
 						var player=_status.event.player;
@@ -10957,12 +10986,15 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				trigger:{target:'useCardToTarget'},
 				direct:true,
 				filter:function(event,player){
-					return event.card.name=='sha';
+					return event.card.name=='sha'&&game.hasPlayer(function(current){
+						return current!=player&&!event.targets.contains(current)&&lib.filter.targetEnabled(event.card,event.player,current);
+					});
 				},
 				content:function(){
 					"step 0"
 					player.chooseTarget(get.prompt2('qiuyuan'),function(card,player,target){
-						return target!=player&&!_status.event.targets.contains(target)&&_status.event.playerx.canUse('sha',target,false);
+						var evt=_status.event.getTrigger();
+						return target!=player&&!evt.targets.contains(target)&&lib.filter.targetEnabled(evt.card,evt.player,target);
 					}).set('ai',function(target){
 						var trigger=_status.event.getTrigger();
 						var player=_status.event.player;
@@ -11798,7 +11830,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				forced:true,
 				audio:2,
 				filter:function(event,player){
-					if(player.getEquip(2)) return false;
+					if(!player.hasEmptySlot(2)) return false;
 					return (event.card.name=='sha'&&get.color(event.card)=='black')
 				},
 				content:function(){
@@ -11807,10 +11839,10 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				ai:{
 					effect:{
 						target:function(card,player,target){
-							if(player==target&&get.subtype(card)=='equip2'){
+							if(player==target&&get.subtypes(card).contains('equip2')){
 								if(get.equipValue(card)<=8) return 0;
 							}
-							if(target.getEquip(2)) return;
+							if(!player.hasEmptySlot(2)) return;
 							if(card.name=='sha'&&get.color(card)=='black') return 'zerotarget';
 						}
 					}
@@ -12073,6 +12105,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			olddanshou:{
+				audio:'danshou',
 				trigger:{source:'damageSource'},
 				//priority:9,
 				check:function(event,player){
@@ -12457,8 +12490,9 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					return false;
 				},
 				filter:function(event,player){
-					return event.source&&event.source!=player&&event.num>0&&event.source.isAlive();
+					return event.source&&event.source!=player&&event.num>0&&event.source.isIn();
 				},
+				logTarget:'source',
 				content:function(){
 					"step 0"
 					event.num=trigger.num;
@@ -12476,7 +12510,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					else{
 						trigger.source.loseHp();
 					}
-					if(event.num>1){
+					if(event.num>1&&player.hasSkill('xinenyuan')&&trigger.source&&trigger.source.isIn()){
+						player.logSkill('xinenyuan',trigger.source)
 						event.num--;
 						event.goto(1);
 					}
@@ -12497,7 +12532,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				audio:true,
 				trigger:{player:'gainEnd'},
 				filter:function(event,player){
-					return event.source&&event.source.isAlive()&&event.source!=player&&event.cards.length>=2;
+					return event.source&&event.source.isIn()&&event.source!=player&&event.cards.length>=2;
 				},
 				logTarget:'source',
 				check:function(event,player){
@@ -12751,7 +12786,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				},
 				filter:function(event){
 					if(event._notrigger.contains(event.player)) return false;
-					return event.card&&event.card.name=='sha'&&event.player.isAlive();
+					return event.card&&event.card.name=='sha'&&event.player.isIn();
 				},
 				logTarget:'player',
 				content:function(){
@@ -12807,7 +12842,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						}
 						var dialog=ui.create.dialog(str,cards);
 						dialog.videoId=id;
-					},player,event.videoId,event.cards,event.name=='chengxiang'?13:12);
+					},player,event.videoId,event.cards,event.name=='oldchengxiang'?12:13);
 					event.time=get.utc();
 					game.addVideo('showCards',player,['称象',get.cardsInfo(event.cards)]);
 					game.addVideo('delay',null,2);
@@ -12821,7 +12856,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						}
 						return (num+get.number(button.link)<=_status.event.maxNum);
 					});
-					next.set('maxNum',event.name=='chengxiang'?13:12);
+					next.set('maxNum',event.name=='oldchengxiang'?12:13);
 					next.set('ai',function(button){
 						return get.value(button.link,_status.event.player);
 					});
@@ -12864,6 +12899,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			oldrenxin:{
+				audio:'renxin',
 				trigger:{global:'dying'},
 				//priority:6,
 				filter:function(event,player){
@@ -12885,7 +12921,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			},
 			renxin:{
 				trigger:{global:'damageBegin4'},
-				audio:3,
+				audio:2,
+				audioname:['re_caochong'],
 				//priority:6,
 				filter:function(event,player){
 					return event.player!=player&&event.player.hp==1&&player.countCards('he',{type:'equip'})>0;
@@ -13027,8 +13064,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xiansix:{},
 			xiansi2:{
 				enable:'chooseToUse',
-				audio:true,
-				audioname:['re_liufeng'],
+				audio:2,
+				audioname2:{re_liufeng:'rexiansi'},
 				viewAs:{name:'sha',isCard:true},
 				filter:function(event,player){
 					return game.hasPlayer(function(current){
@@ -13050,7 +13087,6 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					return false;
 				},
 				forceaudio:true,
-				direct:true,
 				prompt:'弃置一名有【逆】的角色的两张【逆】，然后视为对包含其在内的角色使用【杀】。',
 				delay:false,
 				log:false,
@@ -13095,7 +13131,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					}
 					"step 3"
 					if(event.directresult||result.bool){
-						player.logSkill('xiansi2',event.target);
+						player.logSkill('xiansi2_log',event.target);
+						game.trySkillAudio('xiansi2',event.target,true);
 						var links=event.directresult||result.links;
 						target.loseToDiscardpile(links);
 					}
@@ -13104,7 +13141,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					order:function(){
 						return get.order({name:'sha'})+0.05;
 					},
-				}
+				},
+				subSkill:{log:{}}
 			},
 			shibei:{
 				trigger:{player:'damageEnd'},
@@ -13513,7 +13551,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			chengpu:['re_chengpu','tw_chengpu','ns_chengpu','chengpu','xin_chengpu'],
 			liubiao:['re_liubiao','xin_liubiao','liubiao','oldre_liubiao','old_liubiao'],
 			manchong:['re_manchong','manchong'],
-			caochong:['caochong','old_caochong'],
+			caochong:['re_caochong','caochong','old_caochong'],
 			guohuai:['guohuai','tw_guohuai','re_guohuai','xin_guohuai','ol_guohuai'],
 			jianyong:['re_jianyong','xin_jianyong','jianyong'],
 			panzhangmazhong:['xin_panzhangmazhong','re_panzhangmazhong','panzhangmazhong'],
@@ -13529,10 +13567,10 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			zhuhuan:['re_zhuhuan','xin_zhuhuan','zhuhuan','old_zhuhuan'],
 			caoxiu:['re_caoxiu','tw_caoxiu','xin_caoxiu','caoxiu','old_caoxiu'],
 			xiahoushi:['re_xiahoushi','xiahoushi'],
-			zhangyi:['re_zhangyi','zhangyi'],
+			zhangyi:['xin_zhangyi','re_zhangyi','zhangyi'],
 			quancong:['old_quancong','re_quancong','xin_quancong','quancong'],
 			sunxiu:['re_sunxiu','xin_sunxiu','sunxiu'],
-			zhuzhi:['zhuzhi','xin_zhuzhi','old_zhuzhi'],
+			zhuzhi:['re_zhuzhi','zhuzhi','xin_zhuzhi','old_zhuzhi'],
 			liuyu:['dc_liuyu','liuyu','ol_liuyu'],
 			zhangrang:['zhangrang','ol_zhangrang','junk_zhangrang'],
 			jikang:['re_jikang','jikang'],
@@ -13553,12 +13591,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xunyou:['re_xunyou','xunyou'],
 			xuezong:['tw_xuezong','xuezong'],
             huanghao:['huanghao','dc_huanghao','old_huanghao'],
-			caorui:['caorui','old_caorui'],
+			caorui:['re_caorui','caorui','old_caorui'],
 			sunziliufang:['dc_sunziliufang','sunziliufang'],
 			liyan:['liyan','old_liyan'],
+			zhangsong:['re_zhangsong','zhangsong'],
 		},
 		translate:{
-			old_huaxiong:'华雄',
+			old_huaxiong:'将华雄',
+			old_huaxiong_ab:'华雄',
 			yufan:'虞翻',
 			xushu:'旧徐庶',
 			caozhi:'曹植',
@@ -13618,7 +13658,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xin_yujin:'节钺于禁',
 			xin_liru:'李儒',
 			guohuanghou:'郭皇后',
-			liuyu:'刘虞',
+			liuyu:'OL刘虞',
 			sundeng:'孙登',
 			liyan:'李严',
 			sunziliufang:'孙资刘放',
@@ -13814,9 +13854,9 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xinsidi2:'司敌',
 			xinsidi_info:'其他角色出牌阶段开始时，你可以弃置一张与你装备区里的牌颜色相同的非基本牌，然后该角色于此阶段内不能使用和打出与此牌颜色相同的牌。此阶段结束时，若其此阶段没有使用【杀】，视为你对其使用了【杀】。',
 			dangxian:'当先',
-			dangxian_info:'锁定技，准备阶段，你执行一个额外的出牌阶段。',
+			dangxian_info:'锁定技，回合开始时，你执行一个额外的出牌阶段。',
 			xindangxian:'当先',
-			xindangxian_info:'锁定技，准备阶段，你执行一个额外的出牌阶段。此阶段开始时，你失去1点体力并从牌堆/弃牌堆中获得一张【杀】（若你已发动过〖伏枥〗，则可以不发动此效果）。',
+			xindangxian_info:'锁定技，回合开始时，你执行一个额外的出牌阶段。此阶段开始时，你失去1点体力并从牌堆/弃牌堆中获得一张【杀】（若你已发动过〖伏枥〗，则可以不发动此效果）。',
 			longyin:'龙吟',
 			longyin_info:'当一名角色于其出牌阶段内使用【杀】时，你可弃置一张牌令此【杀】不计入出牌阶段使用次数，若此【杀】为红色，你摸一张牌。',
 			zhongyong:'忠勇',
@@ -14059,7 +14099,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			zili_info:'觉醒技，准备阶段开始时，若“权”的数量不小于3，你减1点体力上限，然后选择一项：1、回复1点体力；2、摸两张牌。然后你获得技能“排异”。',
 			quanji_info:'当你受到1点伤害后，你可以摸一张牌，然后将一张手牌置于武将牌上，称为“权”；你的手牌上限+X（X为“权”的数量）。',
 			xianzhou_info:'限定技。出牌阶段，你可以将装备区内的所有牌交给一名其他角色，然后该角色选择一项：令你回复X点体力；或对其攻击范围内的X名角色各造成1点伤害(X为你以此法交给该角色的牌的数量)。',
-			qieting_info:'其他角色的结束阶段，若其未于此回合内使用过指定其他角色为目标的牌，你可以选择一项：将其装备区里的一张牌移动至你装备区里的相应位置；或摸一张牌。',
+			qieting_info:'其他角色的回合结束时，若其未于此回合内使用过指定其他角色为目标的牌，你可以选择一项：将其装备区里的一张牌移动至你装备区里的相应位置；或摸一张牌。',
 			zhuikong_info:'其他角色的准备阶段，若你已受伤，你可以与该角色拼点。若你赢，该角色本回合使用的牌不能指定除该角色外的角色为目标。若你没赢，其本回合至你的距离视为1。',
 			oldzhuikong_info:'其他角色的准备阶段，若你已受伤，你可以与该角色拼点。若你赢，该角色跳过本回合的出牌阶段。若你没赢，其本回合至你的距离视为1。',
 			qiuyuan_info:'当你成为【杀】的目标时，你可以令一名其他角色选择一项：①、交给你一张【闪】；②、成为此【杀】的额外目标。',
@@ -14072,8 +14112,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			zhiyan_info:'结束阶段，你可以令一名角色摸一张牌并展示之，若为装备牌，其使用此牌并回复一点体力。',
 			miji_info:'结束阶段，若你已受伤，则可以摸X张牌，然后可以将等量的牌交给一名其他角色（X为你已损失的体力值）。',
 			zhenlie_info:'当你成为其他角色使用【杀】或普通锦囊牌的目标后，你可以失去一点体力并令此牌对你无效，然后弃置对方一张牌。',
-			chengxiang_info:'当你受到伤害后，你可以亮出牌堆顶的四张牌。然后获得其中任意数量点数之和不大于13的牌',
-			oldchengxiang_info:'当你受到伤害后，你可以亮出牌堆顶的四张牌。然后获得其中任意数量点数之和不大于12的牌',
+			chengxiang_info:'当你受到伤害后，你可以亮出牌堆顶的四张牌。然后获得其中任意数量点数之和不大于13的牌。',
+			oldchengxiang_info:'当你受到伤害后，你可以亮出牌堆顶的四张牌。然后获得其中任意数量点数之和不大于12的牌。',
 			renxin_info:'当体力值为1的一名其他角色受到伤害时，你可以将武将牌翻面并弃置一张装备牌，然后防止此伤害。',
 			oldrenxin_info:'其他角色进入濒死状态时，你可以将所有手牌交给该角色并翻面，然后该角色回复1点体力。',
 			jingce_info:'出牌阶段结束时，若你本回合使用的牌数量大于或等于你的当前体力值，你可以摸两张牌。',
@@ -14095,7 +14135,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			danshou_info:'出牌阶段，你可以选择你攻击范围内的一名其他角色，然后弃置X张牌（X为此前你于此阶段你发动“胆守”的次数+1）。若X：为1，你弃置该角色的一张牌；为2，令该角色交给你一张牌；为3，你对该角色造成1点伤害；不小于4，你与该角色各摸两张牌。',
 			olddanshou_info:'当你造成伤害后，你可以摸一张牌。若如此做，终止一切结算，当前回合结束。',
 			xindanshou_info:'①每回合限一次，当你成为基本牌或锦囊牌的目标后，你可以摸X张牌（X为你本回合内成为过基本牌或锦囊牌的目标的次数）。②一名其他角色的结束阶段，若你本回合内没有发动过〖胆守①〗，则你可以弃置X张牌并对其造成1点伤害（X为其手牌数，无牌则不弃）。',
-			yizhong_info:'锁定技，当你的防具栏为空时，黑色的杀对你无效',
+			yizhong_info:'锁定技，当你的防具栏为空时，黑色的【杀】对你无效',
 			xinzhan_info:'出牌阶段限一次，你可以观看牌堆顶的3张牌，然后展示其中任意数量♥的牌并获得之。',
 			huilei_info:'锁定技，当你死亡时，杀死你的角色弃置所有的牌。',
 			enyuan_info:'锁定技。①当其他角色令你回复1点体力后，该角色摸一张牌。②当其他角色对你造成伤害后，其须交给你一张♥手牌，否则失去1点体力。',
@@ -14148,13 +14188,13 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			lkbushi:'卜筮',
 			lkbushi_info:'①你使用♠牌无次数限制。②当你使用或打出♥牌后，你摸一张牌。③当你成为♣牌的目标后，你可以弃置一张牌，令此牌对你无效。④结束阶段开始时，你从牌堆或弃牌堆获得一张♦牌。⑤准备阶段开始时，你可调整此技能中四种花色的对应顺序。',
 			lkzhongzhuang:'忠壮',
-			lkzhongzhuang_info:'锁定技。当你因执行【杀】的效果而造成伤害时，若你的攻击范围：大于3，则此伤害+1；小于3，则此伤害改为1。',
+			lkzhongzhuang_info:'锁定技。①当你因执行【杀】的效果而造成伤害时，若你的攻击范围大于3，则此伤害+1。②当一名角色受到你因执行【杀】的效果而造成的伤害时，若你的攻击范围小于3，则此伤害改为1。',
 			kebineng:'轲比能',
 			kousheng:'寇旌',
 			kousheng_info:'①出牌阶段开始时，你可以选择任意张手牌，这些牌称为“寇旌”直到回合结束。②你的“寇旌”均视为【杀】且无次数限制。③当你因执行对应实体牌包含“寇旌”的【杀】的效果而造成伤害后，你展示所有“寇旌”牌，然后目标角色可以用所有手牌交换这些牌。',
 			zhugeshang:'诸葛尚',
 			sangu:'三顾',
-			sangu_info:'结束阶段，你可以选择至多三个{【杀】或不为notarget或singleCard的普通锦囊牌}中的牌名，然后令一名其他角色记录这些牌名。该角色的下个出牌阶段开始时，其的手牌于其需要使用牌时均视为其记录中的第一张牌直到此阶段结束，且当其使用或打出牌时，移除这些牌中的第一张牌。若你以此法选择过的牌名均为你本回合内使用过的牌名，则防止你因其以此法使用牌造成的伤害。',
+			sangu_info:'结束阶段，你可以选择至多三个{【杀】或不为notarget或singleCard的普通锦囊牌}中的牌名，然后令一名其他角色记录这些牌名。该角色的下个出牌阶段开始时，其的手牌于其需要使用牌时均视为其记录中的第一张牌直到此阶段结束，且当其使用或打出有对应实体牌的牌时，移除这些牌中的第一张牌。若你以此法选择过的牌名均为你本回合内使用过的牌名，则防止你因其以此法使用牌造成的伤害。',
 			yizu:'轶祖',
 			yizu_info:'锁定技。每回合限一次，当你成为【杀】或【决斗】的目标后，若你的体力值不大于使用者的体力值，则你回复1点体力。',
 			liwan:'李婉',
