@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>三國殺研討會</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="nonamekill/game/asset.js"></script>
+</head>
+
+<body onload="showVersions()">
+    <h1>版本資訊</h1>
+    <h3>目前版本: <span id="currentVersionSpan"></span></h3>
+    <h3>最新版本: <span id="latestVersionSpan"></span></h3>
+    <br><br>
+    <a href="https://qinkunwei.gitee.io/noname2/" target="_blank">官方網站</a><br>
+    <a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzUwOTMwMjExNQ==&action=getalbum&album_id=1872742397336453125&uin=&key=&devicetype=Windows+10+x64&version=6303051e&lang=zh_CN&ascene=7&fontgear=2"
+        target="_blank">更新說明</a>
+    <br><br><br>
+    <table border=1>
+        <tr>
+            <th>版本</th>
+            <th>Github Repository</th>
+        </tr>
+        <tr>
+            <td><a href="https://threekingdomkillseminar.github.io/nonamekill/" target="_blank">標準版</span></a></td>
+            <td>https://github.com/libccy/noname</td>
+        </tr>
+        <tr>
+            <td><a href="https://adefulodgu.github.io/noname/" target="_blank">美觀版</a></td>
+            <td>https://github.com/adeFuLoDgu/noname</td>
+        </tr>
+        <tr>
+            <td><a href="https://raineggplant.github.io/noname/" target="_blank">PWA版</a></td>
+            <td>https://github.com/RainEggplant/noname</td>
+        </tr>
+        <tr>
+            <td><a href="other.html">其他版本</a></td>
+            <td style="text-align: center;">---</td>
+        </tr>
+    </table>
+    <br><br><br><br>
+    <a href="index.html">&larr; Main Page</a>
+
+
+    <script>
+        const parser = new DOMParser();
+        function extractLatestVersion(atomContent) {
+            const xmlDoc = parser.parseFromString(atomContent, "text/xml");
+            let latestVersion = xmlDoc.querySelector("entry > title").textContent;
+            document.getElementById("latestVersionSpan").innerText = `${xmlDoc.querySelector("entry > title").textContent} ${latestVersion!=noname_asset_list[0]??"(可更新)"}`;
+        }
+    </script>
+    <script>
+        function showVersions(){
+            document.getElementById("currentVersionSpan").innerText = noname_asset_list[0];
+            fetch('https://github.com/libccy/noname/releases.atom')
+                .then(response => response.text())
+                .then(responseText => extractLatestVersion(responseText))
+                .catch(err => document.getElementById("latestVersionSpan").innerText = "(failed to obtain)")
+        }
+    </script>
+</body>
+
+</html>
